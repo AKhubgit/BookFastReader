@@ -14,6 +14,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [wpm, setWpm] = useState(300);
   const [showSettings, setShowSettings] = useState(false);
+  const [hideControls, setHideControls] = useState(false);
   
   const timerRef = useRef<number | null>(null);
 
@@ -130,7 +131,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', padding: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div className={hideControls ? 'auto-hide' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h2 style={{ margin: 0, opacity: 0.8 }}>{title}</h2>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <button className="button secondary icon-button" onClick={() => setShowSettings(true)} title="Settings">
@@ -153,7 +154,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
         )}
       </div>
 
-      <div style={{ marginTop: 'auto' }}>
+      <div className={hideControls ? 'auto-hide' : ''} style={{ marginTop: 'auto' }}>
         <ProgressBar 
           currentIndex={currentIndex} 
           totalWords={words.length} 
@@ -186,7 +187,19 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
               <X size={20} />
             </button>
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Settings</h3>
-            <p style={{ color: 'var(--text-muted)' }}>Settings options will be added here in the future.</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <label htmlFor="hide-controls" style={{ fontSize: '1.1rem' }}>Auto-Hide Controls</label>
+              <input 
+                type="checkbox" 
+                id="hide-controls"
+                checked={hideControls}
+                onChange={(e) => setHideControls(e.target.checked)}
+                style={{ width: '1.25rem', height: '1.25rem' }}
+              />
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              When enabled, controls will be hidden while reading. Hover over their locations (top and bottom) to reveal them.
+            </p>
           </div>
         </div>
       )}

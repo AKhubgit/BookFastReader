@@ -117,3 +117,12 @@ a:hover {
 .button.danger:hover {
   background-color: rgba(239, 68, 68, 0.1);
 }
+
+.auto-hide {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.auto-hide:hover {
+  opacity: 1;
+}
