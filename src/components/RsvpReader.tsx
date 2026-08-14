@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Maximize } from 'lucide-react';
+import { Maximize, Settings, X } from 'lucide-react';
 import { Controls } from './Controls';
 import { ProgressBar } from './ProgressBar';
 
@@ -13,6 +13,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [wpm, setWpm] = useState(300);
+  const [showSettings, setShowSettings] = useState(false);
   
   const timerRef = useRef<number | null>(null);
 
@@ -132,6 +133,9 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h2 style={{ margin: 0, opacity: 0.8 }}>{title}</h2>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button className="button secondary icon-button" onClick={() => setShowSettings(true)} title="Settings">
+            <Settings size={20} />
+          </button>
           <button className="button secondary icon-button" onClick={handleFullscreen} title="Toggle Fullscreen">
             <Maximize size={20} />
           </button>
@@ -165,6 +169,27 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
           onWpmChange={setWpm}
         />
       </div>
+
+      {showSettings && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 50, backdropFilter: 'blur(4px)'
+        }}>
+          <div className="glass-panel" style={{ width: '400px', padding: '2rem', position: 'relative' }}>
+            <button 
+              className="button secondary icon-button" 
+              onClick={() => setShowSettings(false)}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', border: 'none' }}
+            >
+              <X size={20} />
+            </button>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Settings</h3>
+            <p style={{ color: 'var(--text-muted)' }}>Settings options will be added here in the future.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
