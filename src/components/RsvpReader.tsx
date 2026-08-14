@@ -133,7 +133,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     }
 
     const renderSideWords = (sideWords: string[], align: 'right' | 'left') => (
-      <div style={{ flex: 1, display: 'flex', gap: '2rem', justifyContent: align === 'right' ? 'flex-end' : 'flex-start', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', gap: `${2 * scale}rem`, justifyContent: align === 'right' ? 'flex-end' : 'flex-start', overflow: 'hidden' }}>
         {sideWords.map((w, i) => (
           <div key={i} style={{ fontSize: `${5 * scale}rem`, color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap' }}>
             {w}
@@ -143,10 +143,10 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     );
 
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4rem', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: `${4 * scale}rem`, width: '100%' }}>
         {renderSideWords(prevWords, 'right')}
         
-        <div style={{ display: 'flex', justifyContent: 'center', fontSize: `${9 * scale}rem`, fontWeight: 600, letterSpacing: '0.05em', minWidth: '500px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', fontSize: `${9 * scale}rem`, fontWeight: 600, letterSpacing: '0.05em', minWidth: `${500 * scale}px` }}>
           <span style={{ color: 'var(--text-color)', textAlign: 'right', flex: 1 }}>{before}</span>
           <span style={{ color: 'var(--accent-color)' }}>{pivot}</span>
           <span style={{ color: 'var(--text-color)', textAlign: 'left', flex: 1 }}>{after}</span>
