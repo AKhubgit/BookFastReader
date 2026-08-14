@@ -16,6 +16,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [hideControls, setHideControls] = useState(false);
   const [displayWordCount, setDisplayWordCount] = useState(3);
+  const [textSize, setTextSize] = useState(100);
   
   const timerRef = useRef<number | null>(null);
 
@@ -91,6 +92,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
   };
 
   const renderWords = () => {
+    const scale = textSize / 100;
     const currentWord = words[currentIndex] || '';
     
     // Optimal Recognition Point (ORP)
@@ -133,7 +135,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     const renderSideWords = (sideWords: string[], align: 'right' | 'left') => (
       <div style={{ flex: 1, display: 'flex', gap: '2rem', justifyContent: align === 'right' ? 'flex-end' : 'flex-start', overflow: 'hidden' }}>
         {sideWords.map((w, i) => (
-          <div key={i} style={{ fontSize: '5rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap' }}>
+          <div key={i} style={{ fontSize: `${5 * scale}rem`, color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap' }}>
             {w}
           </div>
         ))}
@@ -144,7 +146,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4rem', width: '100%' }}>
         {renderSideWords(prevWords, 'right')}
         
-        <div style={{ display: 'flex', justifyContent: 'center', fontSize: '9rem', fontWeight: 600, letterSpacing: '0.05em', minWidth: '500px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', fontSize: `${9 * scale}rem`, fontWeight: 600, letterSpacing: '0.05em', minWidth: '500px' }}>
           <span style={{ color: 'var(--text-color)', textAlign: 'right', flex: 1 }}>{before}</span>
           <span style={{ color: 'var(--accent-color)' }}>{pivot}</span>
           <span style={{ color: 'var(--text-color)', textAlign: 'left', flex: 1 }}>{after}</span>
@@ -232,6 +234,19 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
                 max="10"
                 value={displayWordCount}
                 onChange={(e) => setDisplayWordCount(parseInt(e.target.value))}
+                style={{ width: '150px' }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <label htmlFor="text-size" style={{ fontSize: '1.1rem' }}>Text Size: {textSize}%</label>
+              <input 
+                type="range" 
+                id="text-size"
+                min="50"
+                max="200"
+                step="10"
+                value={textSize}
+                onChange={(e) => setTextSize(parseInt(e.target.value))}
                 style={{ width: '150px' }}
               />
             </div>
