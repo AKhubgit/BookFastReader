@@ -33,7 +33,7 @@ function App() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%' }}>
       <header style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ color: 'var(--accent-color)' }}>RSVP</span> Web Reader
+          <span style={{ color: 'var(--accent-color)' }}>Blitz</span>Read
         </h1>
         {book && <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Reading: {book.title}</span>}
       </header>

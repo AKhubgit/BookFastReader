@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Maximize } from 'lucide-react';
 import { Controls } from './Controls';
 import { ProgressBar } from './ProgressBar';
 
@@ -76,6 +77,16 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
   const handleRestart = () => setCurrentIndex(0);
   const handleSeek = (index: number) => setCurrentIndex(index);
 
+  const handleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   const renderWords = () => {
     const currentWord = words[currentIndex];
     
@@ -98,18 +109,18 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     const nextWord = currentIndex < words.length - 1 ? words[currentIndex + 1] : '';
 
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3rem', width: '100%' }}>
-        <div style={{ flex: 1, textAlign: 'right', fontSize: '4rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4rem', width: '100%' }}>
+        <div style={{ flex: 1, textAlign: 'right', fontSize: '5rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {prevWord}
         </div>
         
-        <div style={{ display: 'flex', justifyContent: 'center', fontSize: '7rem', fontWeight: 600, letterSpacing: '0.05em', minWidth: '400px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', fontSize: '9rem', fontWeight: 600, letterSpacing: '0.05em', minWidth: '500px' }}>
           <span style={{ color: 'var(--text-color)', textAlign: 'right', flex: 1 }}>{before}</span>
           <span style={{ color: 'var(--accent-color)' }}>{pivot}</span>
           <span style={{ color: 'var(--text-color)', textAlign: 'left', flex: 1 }}>{after}</span>
         </div>
         
-        <div style={{ flex: 1, textAlign: 'left', fontSize: '4rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ flex: 1, textAlign: 'left', fontSize: '5rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {nextWord}
         </div>
       </div>
@@ -120,7 +131,12 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', padding: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h2 style={{ margin: 0, opacity: 0.8 }}>{title}</h2>
-        <button className="button secondary" onClick={onClose}>Close Book</button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button className="button secondary icon-button" onClick={handleFullscreen} title="Toggle Fullscreen">
+            <Maximize size={20} />
+          </button>
+          <button className="button danger" onClick={onClose}>Close Book</button>
+        </div>
       </div>
       
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
