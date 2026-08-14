@@ -98,18 +98,18 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     const nextWord = currentIndex < words.length - 1 ? words[currentIndex + 1] : '';
 
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', width: '100%' }}>
-        <div style={{ flex: 1, textAlign: 'right', fontSize: '3rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3rem', width: '100%' }}>
+        <div style={{ flex: 1, textAlign: 'right', fontSize: '4rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {prevWord}
         </div>
         
-        <div style={{ display: 'flex', justifyContent: 'center', fontSize: '5rem', fontWeight: 600, letterSpacing: '0.05em', minWidth: '400px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', fontSize: '7rem', fontWeight: 600, letterSpacing: '0.05em', minWidth: '400px' }}>
           <span style={{ color: 'var(--text-color)', textAlign: 'right', flex: 1 }}>{before}</span>
           <span style={{ color: 'var(--accent-color)' }}>{pivot}</span>
           <span style={{ color: 'var(--text-color)', textAlign: 'left', flex: 1 }}>{after}</span>
         </div>
         
-        <div style={{ flex: 1, textAlign: 'left', fontSize: '3rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ flex: 1, textAlign: 'left', fontSize: '4rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {nextWord}
         </div>
       </div>
@@ -123,7 +123,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
         <button className="button secondary" onClick={onClose}>Close Book</button>
       </div>
       
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '500px' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
         {words.length > 0 && currentIndex < words.length ? (
           <div className="word-display" style={{ width: '100%' }}>
             {renderWords()}
