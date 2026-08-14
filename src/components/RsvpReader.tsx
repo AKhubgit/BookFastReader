@@ -15,6 +15,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
   const [wpm, setWpm] = useState(300);
   const [showSettings, setShowSettings] = useState(false);
   const [hideControls, setHideControls] = useState(false);
+  const [displayWordCount, setDisplayWordCount] = useState(3);
   
   const timerRef = useRef<number | null>(null);
 
@@ -90,10 +91,9 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
   };
 
   const renderWords = () => {
-    const currentWord = words[currentIndex];
+    const currentWord = words[currentIndex] || '';
     
     // Optimal Recognition Point (ORP)
-    // Generally slightly left of center
     const length = currentWord.length;
     let orpIndex = Math.floor(length / 2);
     if (length > 1) {
@@ -107,14 +107,42 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     const pivot = currentWord.slice(orpIndex, orpIndex + 1);
     const after = currentWord.slice(orpIndex + 1);
     
-    const prevWord = currentIndex > 0 ? words[currentIndex - 1] : '';
-    const nextWord = currentIndex < words.length - 1 ? words[currentIndex + 1] : '';
+    // Calculate words before and after based on displayWordCount
+    const totalSideWords = displayWordCount - 1;
+    const wordsBeforeCount = Math.floor(totalSideWords / 2);
+    const wordsAfterCount = Math.ceil(totalSideWords / 2);
+    
+    const prevWords = [];
+    for (let i = wordsBeforeCount; i > 0; i--) {
+      if (currentIndex - i >= 0) {
+        prevWords.push(words[currentIndex - i]);
+      } else {
+        prevWords.push('');
+      }
+    }
+    
+    const nextWords = [];
+    for (let i = 1; i <= wordsAfterCount; i++) {
+      if (currentIndex + i < words.length) {
+        nextWords.push(words[currentIndex + i]);
+      } else {
+        nextWords.push('');
+      }
+    }
+
+    const renderSideWords = (sideWords: string[], align: 'right' | 'left') => (
+      <div style={{ flex: 1, display: 'flex', gap: '2rem', justifyContent: align === 'right' ? 'flex-end' : 'flex-start', overflow: 'hidden' }}>
+        {sideWords.map((w, i) => (
+          <div key={i} style={{ fontSize: '5rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap' }}>
+            {w}
+          </div>
+        ))}
+      </div>
+    );
 
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4rem', width: '100%' }}>
-        <div style={{ flex: 1, textAlign: 'right', fontSize: '5rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {prevWord}
-        </div>
+        {renderSideWords(prevWords, 'right')}
         
         <div style={{ display: 'flex', justifyContent: 'center', fontSize: '9rem', fontWeight: 600, letterSpacing: '0.05em', minWidth: '500px' }}>
           <span style={{ color: 'var(--text-color)', textAlign: 'right', flex: 1 }}>{before}</span>
@@ -122,9 +150,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
           <span style={{ color: 'var(--text-color)', textAlign: 'left', flex: 1 }}>{after}</span>
         </div>
         
-        <div style={{ flex: 1, textAlign: 'left', fontSize: '5rem', color: 'var(--text-muted)', opacity: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {nextWord}
-        </div>
+        {renderSideWords(nextWords, 'left')}
       </div>
     );
   };
@@ -197,8 +223,20 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
                 style={{ width: '1.25rem', height: '1.25rem' }}
               />
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <label htmlFor="word-count" style={{ fontSize: '1.1rem' }}>Words Displayed: {displayWordCount}</label>
+              <input 
+                type="range" 
+                id="word-count"
+                min="1"
+                max="10"
+                value={displayWordCount}
+                onChange={(e) => setDisplayWordCount(parseInt(e.target.value))}
+                style={{ width: '150px' }}
+              />
+            </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              When enabled, controls will be hidden while reading. Hover over their locations (top and bottom) to reveal them.
+              Hover over top/bottom edges while reading to reveal hidden controls.
             </p>
           </div>
         </div>
