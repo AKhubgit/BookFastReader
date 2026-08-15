@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Maximize, Settings, X } from 'lucide-react';
+import { Maximize, Settings, X, Search } from 'lucide-react';
 import { Controls } from './Controls';
 import { ProgressBar } from './ProgressBar';
 
@@ -17,6 +17,9 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
   const [hideControls, setHideControls] = useState(false);
   const [displayWordCount, setDisplayWordCount] = useState(3);
   const [textSize, setTextSize] = useState(100);
+  const [showDefinition, setShowDefinition] = useState(false);
+  const [definitionData, setDefinitionData] = useState<any>(null);
+  const [isFetchingDefinition, setIsFetchingDefinition] = useState(false);
   
   const timerRef = useRef<number | null>(null);
 
@@ -91,6 +94,35 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     }
   };
 
+  const handleShowDefinition = async () => {
+    setIsPlaying(false);
+    setShowDefinition(true);
+    setDefinitionData(null);
+    setIsFetchingDefinition(true);
+    
+    const currentWord = words[currentIndex] || '';
+    const cleanWord = currentWord.replace(/[^a-zA-Z]/g, '');
+    
+    if (!cleanWord) {
+      setIsFetchingDefinition(false);
+      setDefinitionData({ error: 'No valid word to define.' });
+      return;
+    }
+    
+    try {
+      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`);
+      if (!response.ok) {
+        throw new Error('Definition not found');
+      }
+      const data = await response.json();
+      setDefinitionData(data[0]);
+    } catch (err) {
+      setDefinitionData({ error: 'Definition not found.' });
+    } finally {
+      setIsFetchingDefinition(false);
+    }
+  };
+
   const renderWords = () => {
     const scale = textSize / 100;
     const currentWord = words[currentIndex] || '';
@@ -162,6 +194,9 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
       <div className={hideControls ? 'auto-hide' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h2 style={{ margin: 0, opacity: 0.8 }}>{title}</h2>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button className="button secondary icon-button" onClick={handleShowDefinition} title="Define Word">
+            <Search size={20} />
+          </button>
           <button className="button secondary icon-button" onClick={() => setShowSettings(true)} title="Settings">
             <Settings size={20} />
           </button>
@@ -253,6 +288,47 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
               Hover over top/bottom edges while reading to reveal hidden controls.
             </p>
+          </div>
+        </div>
+      )}
+
+      {showDefinition && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 50, backdropFilter: 'blur(4px)'
+        }}>
+          <div className="glass-panel" style={{ width: '500px', maxWidth: '90vw', maxHeight: '80vh', overflowY: 'auto', padding: '2rem', position: 'relative' }}>
+            <button 
+              className="button secondary icon-button" 
+              onClick={() => setShowDefinition(false)}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', border: 'none' }}
+            >
+              <X size={20} />
+            </button>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', textTransform: 'capitalize' }}>
+              {words[currentIndex]?.replace(/[^a-zA-Z]/g, '') || 'Word'}
+            </h3>
+            
+            {isFetchingDefinition ? (
+              <p style={{ color: 'var(--text-muted)' }}>Loading definition...</p>
+            ) : definitionData?.error ? (
+              <p style={{ color: '#ef4444' }}>{definitionData.error}</p>
+            ) : definitionData ? (
+              <div>
+                {definitionData.meanings.map((meaning: any, i: number) => (
+                  <div key={i} style={{ marginBottom: '1rem' }}>
+                    <h4 style={{ color: 'var(--accent-color)', marginBottom: '0.5rem', fontStyle: 'italic' }}>{meaning.partOfSpeech}</h4>
+                    <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-color)', opacity: 0.9 }}>
+                      {meaning.definitions.slice(0, 3).map((def: any, j: number) => (
+                        <li key={j} style={{ marginBottom: '0.5rem' }}>{def.definition}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       )}
