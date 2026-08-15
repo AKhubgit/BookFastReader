@@ -110,10 +110,10 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     }
     
     try {
-      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`);
+      const response = await fetch(`/api/dictionary/${cleanWord}`);
       if (!response.ok) {
         // Try fallback to datamuse
-        const fallback = await fetch(`https://api.datamuse.com/words?sp=${cleanWord}&md=d&max=1`);
+        const fallback = await fetch(`/api/datamuse/words?sp=${cleanWord}&md=d&max=1`);
         if (fallback.ok) {
           const fallbackData = await fallback.json();
           if (fallbackData && fallbackData.length > 0 && fallbackData[0].defs) {
