@@ -101,7 +101,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     setIsFetchingDefinition(true);
     
     const currentWord = words[currentIndex] || '';
-    const cleanWord = currentWord.replace(/[^a-zA-Z]/g, '');
+    const cleanWord = currentWord.replace(/[^a-zA-Z]/g, '').toLowerCase();
     
     if (!cleanWord) {
       setIsFetchingDefinition(false);
@@ -112,12 +112,35 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     try {
       const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`);
       if (!response.ok) {
-        throw new Error('Definition not found');
+        // Try fallback to datamuse
+        const fallback = await fetch(`https://api.datamuse.com/words?sp=${cleanWord}&md=d&max=1`);
+        if (fallback.ok) {
+          const fallbackData = await fallback.json();
+          if (fallbackData && fallbackData.length > 0 && fallbackData[0].defs) {
+            // Group by part of speech
+            const meaningsMap: Record<string, any[]> = {};
+            fallbackData[0].defs.forEach((defStr: string) => {
+              const [pos, def] = defStr.split('\t');
+              if (!meaningsMap[pos]) meaningsMap[pos] = [];
+              meaningsMap[pos].push({ definition: def });
+            });
+            
+            const meanings = Object.keys(meaningsMap).map(pos => ({
+              partOfSpeech: pos,
+              definitions: meaningsMap[pos]
+            }));
+            
+            setDefinitionData({ meanings });
+            setIsFetchingDefinition(false);
+            return;
+          }
+        }
+        throw new Error(`Definition not found for "${cleanWord}"`);
       }
       const data = await response.json();
       setDefinitionData(data[0]);
-    } catch (err) {
-      setDefinitionData({ error: 'Definition not found.' });
+    } catch (err: any) {
+      setDefinitionData({ error: err.message || 'Definition not found.' });
     } finally {
       setIsFetchingDefinition(false);
     }
