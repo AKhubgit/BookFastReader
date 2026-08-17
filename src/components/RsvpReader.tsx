@@ -1,15 +1,25 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Maximize, Settings, X, Search } from 'lucide-react';
+import { Maximize, Settings, X, Search, FileText } from 'lucide-react';
 import { Controls } from './Controls';
 import { ProgressBar } from './ProgressBar';
+import type { ParsedBook } from '../utils/parser';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 interface RsvpReaderProps {
-  title: string;
-  words: string[];
+  book: ParsedBook;
   onClose: () => void;
 }
 
-export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
+export function RsvpReader({ book, onClose }: RsvpReaderProps) {
+  const { title, words, file, pdfLocations } = book;
+  const isPdf = file?.name.endsWith('.pdf');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [wpm, setWpm] = useState(300);
@@ -20,6 +30,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
   const [showDefinition, setShowDefinition] = useState(false);
   const [definitionData, setDefinitionData] = useState<any>(null);
   const [isFetchingDefinition, setIsFetchingDefinition] = useState(false);
+  const [showPdf, setShowPdf] = useState(false);
   
   const timerRef = useRef<number | null>(null);
 
@@ -77,6 +88,17 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [words.length]);
+
+  // Scroll active PDF word into view
+  useEffect(() => {
+    if (showPdf && isPdf) {
+      const activeEl = document.getElementById('active-pdf-word');
+      if (activeEl) {
+        // smooth scrolling might be too slow for fast RSVP, use instant or smooth depending on wpm if needed
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [currentIndex, showPdf, isPdf]);
 
   const handlePlayPause = () => setIsPlaying(!isPlaying);
   const handleRewind = () => setCurrentIndex(p => Math.max(0, p - 10));
@@ -217,6 +239,11 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
       <div className={hideControls ? 'auto-hide' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h2 style={{ margin: 0, opacity: 0.8 }}>{title}</h2>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {isPdf && (
+            <button className="button secondary icon-button" onClick={() => setShowPdf(!showPdf)} title="Show PDF" style={{ background: showPdf ? 'rgba(255,255,255,0.2)' : undefined }}>
+              <FileText size={20} />
+            </button>
+          )}
           <button className="button secondary icon-button" onClick={handleShowDefinition} title="Define Word">
             <Search size={20} />
           </button>
@@ -230,7 +257,7 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
         </div>
       </div>
       
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+      <div style={{ flex: showPdf ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: showPdf ? '30vh' : '60vh' }}>
         {words.length > 0 && currentIndex < words.length ? (
           <div className="word-display" style={{ width: '100%' }}>
             {renderWords()}
@@ -239,6 +266,24 @@ export function RsvpReader({ title, words, onClose }: RsvpReaderProps) {
           <div>Finished</div>
         )}
       </div>
+
+      {showPdf && isPdf && file && (
+        <div style={{ flex: 0.6, borderTop: '1px solid var(--border-color)', overflowY: 'auto', backgroundColor: '#e5e7eb', display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
+          <Document file={file} loading={<div style={{ color: '#000' }}>Loading PDF...</div>}>
+            <Page 
+              pageNumber={pdfLocations?.[currentIndex]?.pageNumber || 1} 
+              customTextRenderer={({ str, itemIndex }) => {
+                if (pdfLocations?.[currentIndex]?.itemIndex === itemIndex) {
+                  return `<mark id="active-pdf-word" style="background-color: yellow; color: black; border-radius: 2px;">${str}</mark>`;
+                }
+                return str;
+              }}
+              renderAnnotationLayer={false}
+              width={Math.min(window.innerWidth - 64, 800)}
+            />
+          </Document>
+        </div>
+      )}
 
       <div className={hideControls ? 'auto-hide' : ''} style={{ marginTop: 'auto' }}>
         <ProgressBar 

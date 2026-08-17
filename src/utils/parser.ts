@@ -6,6 +6,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 export interface ParsedBook {
   title: string;
   words: string[];
+  file?: File;
+  pdfLocations?: { pageNumber: number; itemIndex: number }[];
 }
 
 export async function parseTxtFile(file: File): Promise<ParsedBook> {
@@ -54,7 +56,8 @@ export async function parseEpubFile(file: File): Promise<ParsedBook> {
         
         resolve({
           title,
-          words
+          words,
+          file
         });
       } catch (err) {
         reject(err);
@@ -72,20 +75,28 @@ export async function parsePdfFile(file: File): Promise<ParsedBook> {
       try {
         const arrayBuffer = e.target?.result as ArrayBuffer;
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let fullText = '';
+        const words: string[] = [];
+        const pdfLocations: { pageNumber: number; itemIndex: number }[] = [];
         
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const textContent = await page.getTextContent();
-          const pageText = textContent.items.map((item: any) => item.str).join(' ');
-          fullText += pageText + ' ';
+          
+          textContent.items.forEach((item: any, itemIndex: number) => {
+            const str = item.str;
+            const parts = str.split(/\s+/).filter((word: string) => word.length > 0);
+            parts.forEach((part: string) => {
+              words.push(part);
+              pdfLocations.push({ pageNumber: i, itemIndex });
+            });
+          });
         }
-        
-        const words = fullText.split(/\s+/).filter(word => word.length > 0);
         
         resolve({
           title: file.name.replace('.pdf', ''),
-          words
+          words,
+          file,
+          pdfLocations
         });
       } catch (err) {
         reject(err);

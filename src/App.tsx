@@ -56,7 +56,7 @@ function App() {
             <FileUpload onFileSelect={handleFileSelect} isLoading={isLoading} />
           </div>
         ) : (
-          <RsvpReader title={book.title} words={book.words} onClose={handleClose} />
+          <RsvpReader book={book} onClose={handleClose} />
         )}
       </main>
     </div>
