@@ -274,7 +274,17 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
         </div>
 
         {showPdf && isPdf && file && (
-          <div style={{ flex: 0.6, borderTop: '1px solid var(--border-color)', backgroundColor: '#e5e7eb', position: 'relative', display: 'flex', minHeight: 0 }}>
+          <div style={{ 
+            flex: 0.6, 
+            border: '4px solid black', 
+            borderRadius: '16px',
+            overflow: 'hidden',
+            backgroundColor: '#e5e7eb', 
+            position: 'relative', 
+            display: 'flex', 
+            minHeight: 0,
+            marginBottom: '1rem'
+          }}>
             
             {/* PDF Controls Overlay */}
             <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', zIndex: 10 }}>
