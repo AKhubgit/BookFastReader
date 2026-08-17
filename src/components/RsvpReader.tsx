@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Maximize, Settings, X, Search, FileText } from 'lucide-react';
+import { Maximize, Settings, X, Search, FileText, ZoomIn, ZoomOut, Lock, Unlock } from 'lucide-react';
 import { Controls } from './Controls';
 import { ProgressBar } from './ProgressBar';
 import type { ParsedBook } from '../utils/parser';
@@ -31,6 +31,8 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
   const [definitionData, setDefinitionData] = useState<any>(null);
   const [isFetchingDefinition, setIsFetchingDefinition] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
+  const [pdfScale, setPdfScale] = useState(1.0);
+  const [autoScrollPdf, setAutoScrollPdf] = useState(true);
   
   const timerRef = useRef<number | null>(null);
 
@@ -91,14 +93,14 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
 
   // Scroll active PDF word into view
   useEffect(() => {
-    if (showPdf && isPdf) {
+    if (showPdf && isPdf && autoScrollPdf) {
       const activeEl = document.getElementById('active-pdf-word');
       if (activeEl) {
         // smooth scrolling might be too slow for fast RSVP, use instant or smooth depending on wpm if needed
         activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
-  }, [currentIndex, showPdf, isPdf]);
+  }, [currentIndex, showPdf, isPdf, autoScrollPdf]);
 
   const handlePlayPause = () => setIsPlaying(!isPlaying);
   const handleRewind = () => setCurrentIndex(p => Math.max(0, p - 10));
@@ -268,20 +270,41 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
       </div>
 
       {showPdf && isPdf && file && (
-        <div style={{ flex: 0.6, borderTop: '1px solid var(--border-color)', overflowY: 'auto', backgroundColor: '#e5e7eb', display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
-          <Document file={file} loading={<div style={{ color: '#000' }}>Loading PDF...</div>}>
-            <Page 
-              pageNumber={pdfLocations?.[currentIndex]?.pageNumber || 1} 
-              customTextRenderer={({ str, itemIndex }) => {
-                if (pdfLocations?.[currentIndex]?.itemIndex === itemIndex) {
-                  return `<mark id="active-pdf-word" style="background-color: yellow; color: black; border-radius: 2px;">${str}</mark>`;
-                }
-                return str;
-              }}
-              renderAnnotationLayer={false}
-              width={Math.min(window.innerWidth - 64, 800)}
-            />
-          </Document>
+        <div style={{ flex: 0.6, borderTop: '1px solid var(--border-color)', backgroundColor: '#e5e7eb', position: 'relative', display: 'flex' }}>
+          
+          {/* PDF Controls Overlay */}
+          <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', zIndex: 10 }}>
+            <button className="button secondary icon-button" onClick={() => setPdfScale(s => Math.min(s + 0.2, 3))} title="Zoom In" style={{ background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none' }}>
+              <ZoomIn size={18} />
+            </button>
+            <button className="button secondary icon-button" onClick={() => setPdfScale(s => Math.max(s - 0.2, 0.5))} title="Zoom Out" style={{ background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none' }}>
+              <ZoomOut size={18} />
+            </button>
+            <button 
+              className={`button secondary icon-button ${autoScrollPdf ? 'active' : ''}`} 
+              onClick={() => setAutoScrollPdf(!autoScrollPdf)} 
+              title={autoScrollPdf ? "Unlock Scroll" : "Lock Scroll (Auto-center)"} 
+              style={{ background: autoScrollPdf ? 'var(--accent-color)' : 'rgba(0,0,0,0.5)', color: 'white', border: 'none' }}
+            >
+              {autoScrollPdf ? <Lock size={18} /> : <Unlock size={18} />}
+            </button>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
+            <Document file={file} loading={<div style={{ color: '#000' }}>Loading PDF...</div>}>
+              <Page 
+                pageNumber={pdfLocations?.[currentIndex]?.pageNumber || 1} 
+                customTextRenderer={({ str, itemIndex }) => {
+                  if (pdfLocations?.[currentIndex]?.itemIndex === itemIndex) {
+                    return `<mark id="active-pdf-word" style="background-color: yellow; color: black; border-radius: 2px;">${str}</mark>`;
+                  }
+                  return str;
+                }}
+                renderAnnotationLayer={false}
+                scale={pdfScale}
+              />
+            </Document>
+          </div>
         </div>
       )}
 
