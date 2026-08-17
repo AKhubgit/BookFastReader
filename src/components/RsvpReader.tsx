@@ -31,7 +31,7 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
   const [definitionData, setDefinitionData] = useState<any>(null);
   const [isFetchingDefinition, setIsFetchingDefinition] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
-  const [pdfScale, setPdfScale] = useState(1.0);
+  const [pdfScale, setPdfScale] = useState(1.5);
   const [autoScrollPdf, setAutoScrollPdf] = useState(true);
   
   const timerRef = useRef<number | null>(null);
@@ -94,11 +94,14 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
   // Scroll active PDF word into view
   useEffect(() => {
     if (showPdf && isPdf && autoScrollPdf) {
-      const activeEl = document.getElementById('active-pdf-word');
-      if (activeEl) {
-        // smooth scrolling might be too slow for fast RSVP, use instant or smooth depending on wpm if needed
-        activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      const timeoutId = setTimeout(() => {
+        const activeEl = document.getElementById('active-pdf-word');
+        if (activeEl) {
+          // smooth scrolling might be too slow for fast RSVP, use instant or smooth depending on wpm if needed
+          activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+      return () => clearTimeout(timeoutId);
     }
   }, [currentIndex, showPdf, isPdf, autoScrollPdf]);
 
@@ -237,8 +240,8 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', padding: '2rem' }}>
-      <div className={hideControls ? 'auto-hide' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', padding: '2rem', overflow: 'hidden' }}>
+      <div className={hideControls ? 'auto-hide' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexShrink: 0 }}>
         <h2 style={{ margin: 0, opacity: 0.8 }}>{title}</h2>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           {isPdf && (
@@ -259,56 +262,58 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
         </div>
       </div>
       
-      <div style={{ flex: showPdf ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: showPdf ? '30vh' : '60vh' }}>
-        {words.length > 0 && currentIndex < words.length ? (
-          <div className="word-display" style={{ width: '100%' }}>
-            {renderWords()}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div style={{ flex: showPdf ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+          {words.length > 0 && currentIndex < words.length ? (
+            <div className="word-display" style={{ width: '100%' }}>
+              {renderWords()}
+            </div>
+          ) : (
+            <div>Finished</div>
+          )}
+        </div>
+
+        {showPdf && isPdf && file && (
+          <div style={{ flex: 0.6, borderTop: '1px solid var(--border-color)', backgroundColor: '#e5e7eb', position: 'relative', display: 'flex', minHeight: 0 }}>
+            
+            {/* PDF Controls Overlay */}
+            <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', zIndex: 10 }}>
+              <button className="button secondary icon-button" onClick={() => setPdfScale(s => Math.min(s + 0.2, 3))} title="Zoom In" style={{ background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none' }}>
+                <ZoomIn size={18} />
+              </button>
+              <button className="button secondary icon-button" onClick={() => setPdfScale(s => Math.max(s - 0.2, 0.5))} title="Zoom Out" style={{ background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none' }}>
+                <ZoomOut size={18} />
+              </button>
+              <button 
+                className={`button secondary icon-button ${autoScrollPdf ? 'active' : ''}`} 
+                onClick={() => setAutoScrollPdf(!autoScrollPdf)} 
+                title={autoScrollPdf ? "Unlock Scroll" : "Lock Scroll (Auto-center)"} 
+                style={{ background: autoScrollPdf ? 'var(--accent-color)' : 'rgba(0,0,0,0.5)', color: 'white', border: 'none' }}
+              >
+                {autoScrollPdf ? <Lock size={18} /> : <Unlock size={18} />}
+              </button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
+              <Document file={file} loading={<div style={{ color: '#000' }}>Loading PDF...</div>}>
+                <Page 
+                  pageNumber={pdfLocations?.[currentIndex]?.pageNumber || 1} 
+                  customTextRenderer={({ str, itemIndex }) => {
+                    if (pdfLocations?.[currentIndex]?.itemIndex === itemIndex) {
+                      return `<mark id="active-pdf-word" style="background-color: yellow; color: black; border-radius: 2px;">${str}</mark>`;
+                    }
+                    return str;
+                  }}
+                  renderAnnotationLayer={false}
+                  scale={pdfScale}
+                />
+              </Document>
+            </div>
           </div>
-        ) : (
-          <div>Finished</div>
         )}
       </div>
 
-      {showPdf && isPdf && file && (
-        <div style={{ flex: 0.6, borderTop: '1px solid var(--border-color)', backgroundColor: '#e5e7eb', position: 'relative', display: 'flex' }}>
-          
-          {/* PDF Controls Overlay */}
-          <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', zIndex: 10 }}>
-            <button className="button secondary icon-button" onClick={() => setPdfScale(s => Math.min(s + 0.2, 3))} title="Zoom In" style={{ background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none' }}>
-              <ZoomIn size={18} />
-            </button>
-            <button className="button secondary icon-button" onClick={() => setPdfScale(s => Math.max(s - 0.2, 0.5))} title="Zoom Out" style={{ background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none' }}>
-              <ZoomOut size={18} />
-            </button>
-            <button 
-              className={`button secondary icon-button ${autoScrollPdf ? 'active' : ''}`} 
-              onClick={() => setAutoScrollPdf(!autoScrollPdf)} 
-              title={autoScrollPdf ? "Unlock Scroll" : "Lock Scroll (Auto-center)"} 
-              style={{ background: autoScrollPdf ? 'var(--accent-color)' : 'rgba(0,0,0,0.5)', color: 'white', border: 'none' }}
-            >
-              {autoScrollPdf ? <Lock size={18} /> : <Unlock size={18} />}
-            </button>
-          </div>
-
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
-            <Document file={file} loading={<div style={{ color: '#000' }}>Loading PDF...</div>}>
-              <Page 
-                pageNumber={pdfLocations?.[currentIndex]?.pageNumber || 1} 
-                customTextRenderer={({ str, itemIndex }) => {
-                  if (pdfLocations?.[currentIndex]?.itemIndex === itemIndex) {
-                    return `<mark id="active-pdf-word" style="background-color: yellow; color: black; border-radius: 2px;">${str}</mark>`;
-                  }
-                  return str;
-                }}
-                renderAnnotationLayer={false}
-                scale={pdfScale}
-              />
-            </Document>
-          </div>
-        </div>
-      )}
-
-      <div className={hideControls ? 'auto-hide' : ''} style={{ marginTop: 'auto' }}>
+      <div className={hideControls ? 'auto-hide' : ''} style={{ marginTop: '1rem', flexShrink: 0 }}>
         <ProgressBar 
           currentIndex={currentIndex} 
           totalWords={words.length} 
