@@ -33,6 +33,8 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
   const [showPdf, setShowPdf] = useState(false);
   const [pdfScale, setPdfScale] = useState(1.5);
   const [autoScrollPdf, setAutoScrollPdf] = useState(true);
+  const [pdfHeightRatio, setPdfHeightRatio] = useState(0.6);
+  const isDraggingRef = useRef(false);
   
   const timerRef = useRef<number | null>(null);
 
@@ -104,6 +106,42 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
       return () => clearTimeout(timeoutId);
     }
   }, [currentIndex, showPdf, isPdf, autoScrollPdf]);
+
+  // Handle draggable resize
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      const container = document.getElementById('rsvp-main-content');
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        const relativeY = e.clientY - rect.top;
+        let newRatio = (rect.height - relativeY) / rect.height;
+        newRatio = Math.max(0.1, Math.min(newRatio, 0.9));
+        setPdfHeightRatio(newRatio);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+  };
 
   const handlePlayPause = () => setIsPlaying(!isPlaying);
   const handleRewind = () => setCurrentIndex(p => Math.max(0, p - 10));
@@ -262,8 +300,8 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
         </div>
       </div>
       
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <div style={{ flex: showPdf ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+      <div id="rsvp-main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div style={{ flex: showPdf ? 1 - pdfHeightRatio : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
           {words.length > 0 && currentIndex < words.length ? (
             <div className="word-display" style={{ width: '100%' }}>
               {renderWords()}
@@ -274,17 +312,36 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
         </div>
 
         {showPdf && isPdf && file && (
-          <div style={{ 
-            flex: 0.6, 
-            border: '4px solid black', 
-            borderRadius: '16px',
-            overflow: 'hidden',
-            backgroundColor: '#e5e7eb', 
-            position: 'relative', 
-            display: 'flex', 
-            minHeight: 0,
-            marginBottom: '1rem'
-          }}>
+          <>
+            <div 
+              onMouseDown={handleDragStart}
+              style={{ 
+                height: '12px', 
+                cursor: 'row-resize', 
+                backgroundColor: 'rgba(255,255,255,0.05)', 
+                margin: '8px 2rem', 
+                borderRadius: '6px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexShrink: 0
+              }}
+              title="Drag to resize"
+            >
+               <div style={{ width: '40px', height: '4px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '2px' }} />
+            </div>
+
+            <div style={{ 
+              flex: pdfHeightRatio, 
+              border: '4px solid black', 
+              borderRadius: '16px',
+              overflow: 'hidden',
+              backgroundColor: '#e5e7eb', 
+              position: 'relative', 
+              display: 'flex', 
+              minHeight: 0,
+              marginBottom: '1rem'
+            }}>
             
             {/* PDF Controls Overlay */}
             <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', zIndex: 10 }}>
@@ -320,6 +377,7 @@ export function RsvpReader({ book, onClose }: RsvpReaderProps) {
               </Document>
             </div>
           </div>
+          </>
         )}
       </div>
 
