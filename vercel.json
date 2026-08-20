@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/dictionary/:word",
+      "destination": "https://api.dictionaryapi.dev/api/v2/entries/en/:word"
+    },
+    {
+      "source": "/api/datamuse/:path*",
+      "destination": "https://api.datamuse.com/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
